@@ -1000,7 +1000,17 @@ fivegctmd3vlcgfgnine
 1six5
 four289`
 
-const inputArr = input.split('\n').filter(Boolean)
+const exampleInput = `1abc2
+pqr3stu8vwx
+a1b2c3d4e5f
+treb7uchet`
+
+function parseInput(input: string) {
+  return input.split('\n')
+}
+
+const inputArr = parseInput(input)
+const exampleInputParsed = parseInput(exampleInput)
 
 export function solution1(input: string[]) {
   let total = 0
