@@ -99,7 +99,7 @@ function solution2BreakLoopEarly(input: string): number {
   const parsedInput = parseInput2(input)
   const { time, distance } = parsedInput
 
-  console.time('solution 2 full loop')
+  console.time('solution 2 break early')
   let minTimeNeededForWin = 0
   let maxTimeNeededForWin = 0
 
@@ -123,7 +123,7 @@ function solution2BreakLoopEarly(input: string): number {
     }
   }
 
-  console.timeEnd('solution 2 full loop')
+  console.timeEnd('solution 2 break early')
   return maxTimeNeededForWin - minTimeNeededForWin + 1
 }
 
@@ -141,28 +141,16 @@ function quadraticFormula(
   }
 }
 
+// 0.061ms
 function solution2QuadarticEquation(input: string): number {
   const parsedInput = parseInput2(input)
   const { time, distance } = parsedInput
 
-  console.time('solution 2 full loop')
-
-  // time - 71530
-  // distance - 940200
-
-  // y = distance
-  // equation is distance = speed * time
-  // speed is = time held
-  // time is = startingtime - time held
-
-  // distance = TH * (time - TH)
-  // 940200 = TH * (71530 - TH)
-  // 940200 = 71530TH - TH^2
-  // 0 = -TH^2 + 71530TH - 940200
+  console.time('solution 2 quadartic')
 
   const { lowerBound, upperBound } = quadraticFormula(-1, time, -distance)
 
-  console.timeEnd('solution 2 full loop')
+  console.timeEnd('solution 2 quadartic')
   return Math.floor(upperBound) - Math.ceil(lowerBound) + 1
 }
 
