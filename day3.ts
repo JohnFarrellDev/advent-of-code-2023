@@ -139,8 +139,6 @@ const input = `...733.......289..262.....520..................161.462..........4
 ......*....256.......*.......+..57..806.......................591*............................*348....829...................+460............
 .....................244....6.....................................789......................687..............................................`
 
-const inputArr = input.split('\n').map((row) => row.split(''))
-
 const inputExample = `467..114..
 ...*......
 ..35..633.
@@ -152,53 +150,172 @@ const inputExample = `467..114..
 ...$.*....
 .664.598..`
 
-const inputExampleArr = inputExample.split('\n').map((row) => row.split(''))
-
 const numbers = new Set(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
+const notSymbolValues = new Set(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'])
+
 const grid = [
-  { x: -1, y: -1 },
-  { x: 0, y: -1 },
-  { x: 1, y: -1 },
-  { x: -1, y: 0 },
-  { x: 1, y: 0 },
-  { x: -1, y: 1 },
-  { x: 0, y: 1 },
-  { x: 1, y: 1 },
-]
+  { xGrid: -1, yGrid: -1 },
+  { xGrid: 0, yGrid: -1 },
+  { xGrid: 1, yGrid: -1 },
+  { xGrid: -1, yGrid: 0 },
+  { xGrid: 1, yGrid: 0 },
+  { xGrid: -1, yGrid: 1 },
+  { xGrid: 0, yGrid: 1 },
+  { xGrid: 1, yGrid: 1 },
+] as const
 
-function solution1(input: string[][]) {
-  let total = 0
+type Cell = {
+  value: string
+  adjacentToSymbol: boolean
+  numericalValue?: number
+}
 
-  for (let i = 0; i < input.length; i++) {
-    const row = input[i]
-    let currentValue = ''
-    let hasSpecialSymbol = false
+type Cell2 = {
+  value: string
+  isGear: boolean
+  adjacentNumbers: number[]
+}
 
-    for (let j = 0; j < row.length; j++) {
-      const value = row[j]
+function parseInput(input: string) {
+  const inputAsLines = input.split('\n')
 
-      if (numbers.has(value)) {
-        currentValue += value
+  const mappedGrid: Cell[][] = []
+  for (let i = 0; i < inputAsLines.length; i++) {
+    mappedGrid.push([])
+  }
+
+  for (let y = 0; y < inputAsLines.length; y++) {
+    const line = inputAsLines[y]
+    for (let x = 0; x < line.length; x++) {
+      const value = line[x]
+
+      const mappedCell: Cell = {
+        value,
+        adjacentToSymbol: false,
+        numericalValue: undefined,
       }
 
-      if (currentValue) {
-        for (const { x, y } of grid) {
-          const adjacentCell = input[i + y]?.[j + x]
-          if (
-            adjacentCell &&
-            adjacentCell !== '.' &&
-            !numbers.has(adjacentCell)
-          ) {
-            hasSpecialSymbol = true
-          }
+      if (numbers.has(value)) {
+        let currentValue = value
+
+        let lPointer = x - 1
+        let rPointer = x + 1
+
+        while (numbers.has(line[lPointer])) {
+          currentValue = line[lPointer] + currentValue
+          lPointer--
+        }
+
+        while (numbers.has(line[rPointer])) {
+          currentValue = currentValue + line[rPointer]
+          rPointer++
+        }
+
+        mappedCell.numericalValue = Number(currentValue)
+      }
+
+      for (const { xGrid, yGrid } of grid) {
+        const cellY = y + yGrid
+        const cellX = x + xGrid
+
+        const neighbourCell = inputAsLines[cellY]?.[cellX]
+        if (neighbourCell === undefined) continue
+        if (!notSymbolValues.has(neighbourCell)) {
+          mappedCell.adjacentToSymbol = true
         }
       }
 
-      const nextValue = row[j + 1]
-      if (!numbers.has(nextValue)) {
-        if (hasSpecialSymbol) total += Number(currentValue)
-        currentValue = ''
-        hasSpecialSymbol = false
+      mappedGrid[y].push(mappedCell)
+    }
+  }
+
+  return mappedGrid
+}
+
+function parseInput2(input: string) {
+  const inputAsLines = input.split('\n')
+
+  const mappedGrid: Cell2[][] = []
+  for (let i = 0; i < inputAsLines.length; i++) {
+    mappedGrid.push([])
+  }
+
+  for (let y = 0; y < inputAsLines.length; y++) {
+    const line = inputAsLines[y]
+    for (let x = 0; x < line.length; x++) {
+      const value = line[x]
+
+      const mappedCell: Cell2 = {
+        value,
+        isGear: value === '*',
+        adjacentNumbers: [],
+      }
+
+      if (!mappedCell.isGear) {
+        mappedGrid[y].push(mappedCell)
+        continue
+      }
+
+      // `x:${xValue},y:${yValue}`
+      const visitedCooridinates: Set<string> = new Set()
+
+      for (const { xGrid, yGrid } of grid) {
+        const cellY = y + yGrid
+        const cellX = x + xGrid
+
+        if (visitedCooridinates.has(`x:${cellX},y:${cellY}`)) continue
+
+        const gridLine = inputAsLines[cellY]
+        const neighbourCell = gridLine?.[cellX]
+        if (!numbers.has(neighbourCell)) continue
+
+        let currentValue = neighbourCell
+        let lPointer = cellX - 1
+        let rPointer = cellX + 1
+
+        while (
+          numbers.has(gridLine[lPointer]) &&
+          !visitedCooridinates.has(`x:${lPointer},y:${cellY}`)
+        ) {
+          currentValue = gridLine[lPointer] + currentValue
+          visitedCooridinates.add(`x:${lPointer},y:${cellY}`)
+          lPointer--
+        }
+
+        while (
+          numbers.has(gridLine[rPointer]) &&
+          !visitedCooridinates.has(`x:${rPointer},y:${cellY}`)
+        ) {
+          currentValue = currentValue + gridLine[rPointer]
+          visitedCooridinates.add(`x:${rPointer},y:${cellY}`)
+          rPointer++
+        }
+
+        mappedCell.adjacentNumbers.push(Number(currentValue))
+      }
+
+      mappedGrid[y].push(mappedCell)
+    }
+  }
+
+  return mappedGrid
+}
+
+export function solution1(input: string) {
+  const parsedData = parseInput(input)
+
+  let total = 0
+
+  for (let y = 0; y < parsedData.length; y++) {
+    for (let x = 0; x < parsedData[y].length; x++) {
+      const cell = parsedData[y][x]
+
+      if (cell.adjacentToSymbol && cell.numericalValue) {
+        total += cell.numericalValue
+
+        while (parsedData[y][x + 1] && parsedData[y][x + 1].numericalValue) {
+          x++
+        }
       }
     }
   }
@@ -206,96 +323,24 @@ function solution1(input: string[][]) {
   return total
 }
 
-function solution2(inputArr: string[][]) {
+export function solution2(input: string) {
+  const parsedData = parseInput2(input)
+
   let total = 0
-  // x-cor, y-cor
-  const visitedSpecialCooridnates = new Set()
-  for (let i = 0; i < inputArr.length; i++) {
-    const row = inputArr[i]
-    let currentValue = ''
-    let hasSpecialSymbol = false
-    const specialSymbolCoordinates: Record<'x' | 'y', number> = {
-      x: -1,
-      y: -1,
-    }
 
-    function reset() {
-      currentValue = ''
-      hasSpecialSymbol = false
-      specialSymbolCoordinates.x = -1
-      specialSymbolCoordinates.y = -1
-    }
+  for (let y = 0; y < parsedData.length; y++) {
+    for (let x = 0; x < parsedData[y].length; x++) {
+      const cell = parsedData[y][x]
 
-    for (let j = 0; j < row.length; j++) {
-      const value = row[j]
+      if (!cell.isGear) continue
+      if (cell.adjacentNumbers.length !== 2) continue
 
-      if (numbers.has(value)) {
-        currentValue += value
-      }
-
-      if (!currentValue) {
-        reset()
-        continue
-      }
-
-      for (const { x, y } of grid) {
-        const adjacentCell = inputArr[i + y]?.[j + x]
-        const cellIndex = `x:${j + x},y:${i + y}`
-        if (adjacentCell === '*' && !visitedSpecialCooridnates.has(cellIndex)) {
-          hasSpecialSymbol = true
-          specialSymbolCoordinates.y = i + y
-          specialSymbolCoordinates.x = j + x
-        }
-      }
-
-      const nextValue = row[j + 1]
-      if (numbers.has(nextValue)) continue
-
-      if (!hasSpecialSymbol) {
-        reset()
-        continue
-      }
-
-      for (const { x, y } of grid) {
-        if (
-          visitedSpecialCooridnates.has(
-            `x:${specialSymbolCoordinates.x},y:${specialSymbolCoordinates.y}`,
-          )
-        )
-          continue
-
-        const newY = y + specialSymbolCoordinates.y
-        const newX = x + specialSymbolCoordinates.x
-
-        let coordinateValue = inputArr[newY]?.[newX]
-        if (!numbers.has(coordinateValue)) continue
-
-        visitedSpecialCooridnates.add(
-          `x:${specialSymbolCoordinates.x},y:${specialSymbolCoordinates.y}`,
-        )
-
-        let leftNewX = newX - 1
-        let rightNewX = newX + 1
-        while (numbers.has(inputArr[newY]?.[leftNewX])) {
-          coordinateValue = inputArr[newY][leftNewX] + coordinateValue
-          leftNewX--
-        }
-        while (numbers.has(inputArr[newY]?.[rightNewX])) {
-          coordinateValue = coordinateValue + inputArr[newY][rightNewX]
-          rightNewX++
-        }
-
-        const amountToAdd = Number(currentValue) * Number(coordinateValue)
-        total += amountToAdd
-
-        reset()
-        break
-      }
-      reset()
+      total += cell.adjacentNumbers[0] * cell.adjacentNumbers[1]
     }
   }
+
   return total
 }
 
-console.log('Solution 1:', solution1(inputArr))
-console.log('Solutin 2:', solution2(inputExampleArr))
+console.log('Solution 1:', solution1(input))
+console.log('Solutin 2:', solution2(input))
