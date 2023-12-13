@@ -302,6 +302,7 @@ function parseInput2(input: string) {
 }
 
 export function solution1(input: string) {
+  console.time('solution 1')
   const parsedData = parseInput(input)
 
   let total = 0
@@ -320,10 +321,12 @@ export function solution1(input: string) {
     }
   }
 
+  console.timeEnd('solution 1')
   return total
 }
 
 export function solution2(input: string) {
+  console.time('solution 2')
   const parsedData = parseInput2(input)
 
   let total = 0
@@ -339,6 +342,7 @@ export function solution2(input: string) {
     }
   }
 
+  console.timeEnd('solution 2')
   return total
 }
 
